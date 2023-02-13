@@ -969,7 +969,7 @@ def main():
     # logger setting
     logger = logging.getLogger('PsyQiLogger')
     logger.setLevel(logging.DEBUG)
-    window = SynapseSegmentator(logger, 'radiance', '1.1.1')
+    window = SynapseSegmentator(logger, 'breeze', '1.1.1')
 
     window.iconphoto(False, tk.PhotoImage(file=resource_path('lulabicon.gif')))
     window.mainloop()

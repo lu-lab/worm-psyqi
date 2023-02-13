@@ -5,6 +5,7 @@ import os
 import sys
 import tkinter as tk
 from tkinter import filedialog, simpledialog
+from ttkthemes import ThemedStyle
 
 import numpy as np
 
@@ -20,6 +21,8 @@ class SynapseCorrector(tk.Tk):
         self.title("PsyQi Synapse Corrector")
         self.logger = logger
         self.resizable(0, 0)
+        style = ThemedStyle(self)
+        style.set_theme('breeze')
 
         self.initialdir = initialdir
         self.savedir = savedir
