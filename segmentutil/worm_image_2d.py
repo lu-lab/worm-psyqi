@@ -193,14 +193,14 @@ class WormImage(object):
                 self._read_img(array, axes, scaling_xyz=(scaling_x, scaling_y, scaling_z), **kwargs)
 
                 # temporarily - read preprocessed red channel as red channel
-                #self.logger.info('Replace red channel with preprocessed (adaptive equalization) image.')
-                #self._img_3d[..., self.ch_cell] = imread(os.path.join(os.path.dirname(self.dirs['mask']), 'preprocessing',
+                # self.logger.info('Replace red channel with preprocessed (adaptive equalization) image.')
+                # self._img_3d[..., self.ch_cell] = imread(os.path.join(os.path.dirname(self.dirs['mask']), 'preprocessing',
                 #                                         '%s_red_adaptive_equalization_005.tif' % self.file_name))
-                #self.logger.info('Replace red channel with preprocessed (contrast stretching) image.')
-                #self._img_3d[..., self.ch_cell] = imread(os.path.join(os.path.dirname(self.dirs['mask']), 'preprocessing',
+                # self.logger.info('Replace red channel with preprocessed (contrast stretching) image.')
+                # self._img_3d[..., self.ch_cell] = imread(os.path.join(os.path.dirname(self.dirs['mask']), 'preprocessing',
                 #                                         '%s_red_contrast_stretching_995.tif' % self.file_name))
-                #self.logger.info('Replace red channel with preprocessed (histogram equalization) image.')
-                #self._img_3d[..., self.ch_cell] = imread(os.path.join(os.path.dirname(self.dirs['mask']), 'preprocessing',
+                # self.logger.info('Replace red channel with preprocessed (histogram equalization) image.')
+                # self._img_3d[..., self.ch_cell] = imread(os.path.join(os.path.dirname(self.dirs['mask']), 'preprocessing',
                 #                                         '%s_red_histogram_equalization.tif' % self.file_name))
 
     def _read_nd2(self, file_raw, **kwargs):
@@ -255,6 +255,9 @@ class WormImage(object):
             # single channel images
             if len(kwargs['channel']) <= 1:
                 self.is_singlechannel = True
+                self.ch_synapse = 0
+                self.ch_cell = -1
+                self.ch_bf = -1
             else:
                 self.is_singlechannel = False
                 if 'N' in kwargs['channel']:
@@ -448,16 +451,28 @@ class WormImage(object):
             dir_key='mask',
             prune_cc=mask_prune_cc)
 
+    def _load_mask_file(self, mask_dir_key):
+        img_mask = None
+        mask_file_path = self.name_cell_mask(self.dirs[mask_dir_key], self.file_name)
+        if os.path.isfile(mask_file_path):
+            img_mask = imread(mask_file_path) > 0
+            # if 2d mask is provided, stack it to match the dimension of the raw image
+            if len(img_mask.shape) == 2:
+                img_mask = np.repeat(img_mask[np.newaxis, :, :], self.shape[0], axis=0)
+        elif self.is_singlechannel:
+            img_mask = np.ones(self.shape[:3], dtype=bool)
+
+        return img_mask
+
     def _masking(self, src_syn, src_cell, dir_key: str, prune_cc: bool):
-        if self.is_singlechannel or not self.apply_masking:
-            # if it's a single-channel image, then neurite mask is just all area
+        if not self.apply_masking:
+            # if the user choose not to use mask, then neurite mask is just all area
             img_mask = np.ones(self.shape[:3], dtype=bool)
         else:
             out_path_1 = self.name_cell_mask(self.dirs[dir_key], self.file_name)
             out_path_2 = self.name_mask_overlay(self.dirs[dir_key], self.file_name)
-            if os.path.isfile(out_path_1):
-                img_mask = imread(out_path_1) > 0
-            else:
+            img_mask = self._load_mask_file(dir_key)
+            if img_mask is None:
                 start_time = time.time()
 
                 dst_xy_dilate = np.zeros(self.shape[:3], dtype=np.float32)
@@ -540,14 +555,15 @@ class WormImage(object):
         return img_mask, img_masked
 
     def masking_unet(self, model):
-        if self.is_singlechannel or not self.apply_masking:
-            # if it's a single-channel image, then neurite mask is just all area
+        if not self.apply_masking:
+            # if the user choose not to use mask, then neurite mask is just all area
             self._img_3d_cell_mask = np.ones(self.shape[:3], dtype=bool)
         else:
             out_path_1 = self.name_cell_mask(self.dirs['mask'], self.file_name)
             out_path_2 = self.name_mask_overlay(self.dirs['mask'], self.file_name)
-            if os.path.isfile(out_path_1):
-                self._img_3d_cell_mask = (imread(out_path_1) > 0)
+            img_mask = self._load_mask_file('mask')
+            if img_mask is not None:
+                self._img_3d_cell_mask = img_mask
                 if not self.minimize_storage:
                     if os.path.isfile(out_path_2):
                         self._img_3d_mask_overlay = imread(out_path_2)
@@ -578,14 +594,15 @@ class WormImage(object):
                     imsave(out_path_2, self._img_3d_mask_overlay)
 
     def masking_unet_multichannel(self, model):
-        if self.is_singlechannel or not self.apply_masking:
-            # if it's a single-channel image, then neurite mask is just all area
+        if not self.apply_masking:
+            # if the user choose not to use mask, then neurite mask is just all area
             self._img_3d_cell_mask = np.ones(self.shape[:3], dtype=bool)
         else:
             out_path_1 = self.name_cell_mask(self.dirs['mask'], self.file_name)
             out_path_2 = self.name_mask_overlay(self.dirs['mask'], self.file_name)
-            if os.path.isfile(out_path_1):
-                self._img_3d_cell_mask = (imread(out_path_1) > 0)
+            img_mask = self._load_mask_file('mask')
+            if img_mask is not None:
+                self._img_3d_cell_mask = img_mask
                 if not self.minimize_storage:
                     if os.path.isfile(out_path_2):
                         self._img_3d_mask_overlay = imread(out_path_2)
@@ -1096,7 +1113,6 @@ class WormImage(object):
 
         tic_lv2 = time.perf_counter()
         # look around patches and if any positive label is contained in a patch, then include it to training set
-
 
         region_set_feat = np.zeros(shape=self.shape[:3], dtype=bool)
         cnt_patches = len(self._init_patch_list)
