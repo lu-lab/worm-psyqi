@@ -3,7 +3,7 @@
 WormPsyQi is a semi-automated pipeline for high-throughput analysis of synapses in the nematode C. elegans. Using fluorescent protein-based techniques, WormPsyQi can quantitate multiple features of synapses, including number, size, intensity, and spatial distribution. We provide a pure python-based GUI.
 
 ## Installation
-Clone this repository and use the provided [yml file](./conda-environments/WORMPSYQI.yml) to setup an Anaconda environment.
+Clone this repository and use the provided [yml file](./conda-environments/WORMPSYQI.yml) to setup an Anaconda environment. If you're on a Windows machine, make sure that you run your Anaconda Prompt as administrator.
 ```consol
 $ conda env create -f ./conda-environments/WORMPSYQI.yml
 ```
