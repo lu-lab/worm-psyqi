@@ -8,7 +8,6 @@ from typing import List, Dict
 
 import numpy as np
 from PIL import Image, ImageTk
-from skimage import img_as_ubyte
 from skimage.io import imsave
 
 from gui.utils import SynapseImage, is_on_OSX, is_on_Linux
@@ -740,14 +739,14 @@ class SynapseListWidget(tk.Frame):
         scrollbar.pack(side=tk.RIGHT, expand=1, fill=tk.Y)
         self.list.pack(side=tk.LEFT, expand=1, fill=tk.Y)
 
-    def __contains__(self, syn_id):
-        return syn_id in self.list.get(0, tk.END)
+    def __contains__(self, synapse: Synapse3D):
+        return str(synapse) in self.list.get(0, tk.END)
 
-    def insert(self, syn_id):
-        self.list.insert(tk.END, syn_id)
+    def insert(self, synapse: Synapse3D):
+        self.list.insert(tk.END, str(synapse))
 
-    def delete(self, syn_id):
-        idx = self.list.get(0, tk.END).index(syn_id)
+    def delete(self, synapse: Synapse3D):
+        idx = self.list.get(0, tk.END).index(str(synapse))
         self.list.delete(idx)
 
     def get_id_curselection(self):
@@ -767,6 +766,10 @@ class SynapseListWidget(tk.Frame):
             cursel = self.get_id_curselection()
             self.list.select_clear(cursel)
             self.list.select_set(cursel + 1)
+
+    def get_sid_list(self):
+        list_str = self.list.get(0, tk.END)
+        return [Synapse3D.str_to_id(id_str) for id_str in list_str]
 
 
 class ContrastWindow(tk.Toplevel):

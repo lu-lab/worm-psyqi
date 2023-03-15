@@ -327,20 +327,20 @@ def predict(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_synapse_cutoff,
     if option_classifier[0] == 'Built-in':
         if b_singlechannel:
             # TODO: further categorize
-            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'NSM_CLA1_no_mask_RFCV_v109'))
+            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'NSM_CLA1_no_mask_RFCV_v112'))
             model = SynapseClassifier_RF
         elif option_classifier[1] == 'GRASP (sparse)':
-            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'otIs612_GRASP_RFCV_v109'))
+            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'otIs612_GRASP_RFCV_v112'))
             model = SynapseClassifier_RF
         elif option_classifier[1] == 'GRASP (dense)':
-            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'otIs653_GRASP_RFCV_v109'))
+            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'otIs653_GRASP_RFCV_v112'))
             model = SynapseClassifier_RF
         elif option_classifier[1] == 'CLA-1':
-            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'I5_CLA1_RFCV_v109'))
+            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'I5_CLA1_RFCV_v112'))
             model = SynapseClassifier_RF
         elif option_classifier[1] == 'RAB-3':
             # TODO: train RAB-3 diffusive classifier
-            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'I5_CLA1_RFCV_v109'))
+            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'I5_CLA1_RFCV_v112'))
             model = SynapseClassifier_RF
     elif option_classifier[0] == 'Custom':
         train_dir_full = os.path.join(base_dir, option_classifier[1])
@@ -578,10 +578,16 @@ def _quantify(i, n, col_props, base_dir, file_raw, mask_dir, input_dir, output_d
     # get mean inter-synapse distance
     s_z, s_y, s_x = worm_img.get_scaling()
     misd_px, misd_si = qt.mean_inter_synapse_distance((s_z, s_y, s_x))
+    total_volume_px = qt.sum_prop('area')
+    if None in (s_z, s_y, s_x):
+        total_volume_si = np.NaN
+    else:
+        total_volume_si = total_volume_px * s_z * s_y * s_x
 
     return ((file_name,
              qt.number(),
-             qt.sum_prop('area'),
+             total_volume_px,
+             total_volume_si,
              qt.mean_intensity_of_all_positives(),
              *qt.spatial_dispersion_rms((s_z, s_y, s_x)),
              misd_px, misd_si,
@@ -630,11 +636,11 @@ def quantify(base_dir, raw_dir, mask_dir, input_dir, output_dir, n_p, channel_te
                  'euler_number', 'extent', 'filled_area', 'major_axis_length', 'minor_axis_length']
     # lists for animal-wise feature
     group_stats = []
-    # 7 for 'Number', 'Total Area', 'Mean pixel intensity', 'Spatial Dispersion (pixels)',
-    #                               'Spatial Dispersion (Meters)', 'Mean inter-synapse distance (pixels)',
-    #                               'Mean inter-synapse distance (Meters)'
+    # 8 for 'Number', 'Total Volume (pixels)', 'Total Volume (m^3)',
+    #       'Mean pixel intensity', 'Spatial Dispersion (pixels)', 'Spatial Dispersion (Meters)',
+    #       'Mean inter-synapse distance (pixels)', 'Mean inter-synapse distance (Meters)'
     # len(col_props) for mean value of each synapse-wise features
-    avg_group_stat = np.zeros(dtype=float, shape=7 + len(col_props))
+    avg_group_stat = np.zeros(dtype=float, shape=8 + len(col_props))
     deep_phy_stat = []
 
     def parse_result(r, gs, ags, dps):
@@ -674,9 +680,10 @@ def quantify(base_dir, raw_dir, mask_dir, input_dir, output_dir, n_p, channel_te
         group_stats.sort(key=lambda x: x[0])
         group_stats.append(['Average', ] + list(avg_group_stat))
         with open(os.path.join(base_dir, output_dir, 'quantification_stat.csv'), 'w') as h:
-            h.write(','.join(['Name', 'Number', 'Total Area', 'Mean pixel intensity', 'Spatial Dispersion (pixels)',
-                              'Spatial Dispersion (Meters)', 'Mean inter-synapse distance (pixels)',
-                              'Mean inter-synapse distance (Meters)'] + ['Mean ' + col for col in col_props]) + '\n')
+            h.write(','.join(['Name', 'Number', 'Total Volume (pixels)', 'Total Volume (m^3)',
+                              'Mean pixel intensity', 'Spatial Dispersion (pixels)', 'Spatial Dispersion (Meters)',
+                              'Mean inter-synapse distance (pixels)', 'Mean inter-synapse distance (Meters)'
+                              ] + ['Mean ' + col for col in col_props]) + '\n')
             h.writelines([','.join([str(s) for s in stat]) + '\n' for stat in group_stats])
 
         with open(os.path.join(base_dir, output_dir, 'quantification_stat_deep.csv'), 'w') as h:

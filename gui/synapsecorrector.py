@@ -12,7 +12,7 @@ import numpy as np
 from gui.utils import BusyManager, SynapseImage, AsyncImageLoader
 from gui.widgets_corrector import ImageListWidget, SynapseViewerWidget, SynapseListWidget, ContrastWindow, \
     Virtual3DCanvas
-from segmentutil.synapse_quantification import SynapseQT3D
+from segmentutil.synapse_quantification import Synapse3D, SynapseQT3D
 
 
 class SynapseCorrector(tk.Tk):
@@ -257,7 +257,7 @@ class SynapseCorrector(tk.Tk):
             synapses = self.current_synapses.synapses()
             if synapses:
                 for s in synapses:
-                    self.syn_p_list.insert(s.id)
+                    self.syn_p_list.insert(s)
                     s.state = s.State.POSITIVE
             self.viewer.cv_main.refresh_synapse_state()
         self.busymanager.notbusy()
@@ -269,12 +269,12 @@ class SynapseCorrector(tk.Tk):
             if (syn.prop.bbox[0] <= widget.cur_z < syn.prop.bbox[3]) and (
                     syn.prop.bbox[1] <= j < syn.prop.bbox[4]) and (
                     syn.prop.bbox[2] <= i < syn.prop.bbox[5]):
-                if syn.id in self.syn_p_list:
-                    idx = self.syn_p_list.list.get(0, tk.END).index(syn.id)
+                if syn in self.syn_p_list:
+                    idx = self.syn_p_list.get_sid_list().index(syn.id)
                     self.syn_p_list.list.select_clear(0, tk.END)
                     self.syn_p_list.list.select_set(idx)
-                elif syn.id in self.syn_n_list:
-                    idx = self.syn_n_list.list.get(0, tk.END).index(syn.id)
+                elif syn in self.syn_n_list:
+                    idx = self.syn_n_list.get_sid_list().index(syn.id)
                     self.syn_n_list.list.select_clear(0, tk.END)
                     self.syn_n_list.list.select_set(idx)
                 self._focus_synapse(syn.id)
@@ -284,7 +284,7 @@ class SynapseCorrector(tk.Tk):
         # revert last selected item's state
         for syn in self.current_synapses.synapses():
             if syn.state == syn.State.SELECTED:
-                if syn.id in self.syn_p_list:
+                if syn in self.syn_p_list:
                     syn.state = syn.State.POSITIVE
                 else:
                     syn.state = syn.State.NEGATIVE
@@ -299,7 +299,7 @@ class SynapseCorrector(tk.Tk):
         widget: tk.Listbox = event.widget
         if widget.size() > 0 and len(widget.curselection()) > 0:
             selection_val = widget.get(widget.curselection()[0])
-            self._focus_synapse(selection_val)
+            self._focus_synapse(Synapse3D.str_to_id(selection_val))
 
     def _reject_small_synapses(self):
         min_area = simpledialog.askinteger("Are filtering", "Reject synapses whose volume is under",
@@ -307,9 +307,9 @@ class SynapseCorrector(tk.Tk):
                                            minvalue=0)
         synapses = self.current_synapses.get_small_synapses(min_area)
         for syn in synapses:
-            if syn.id in self.syn_p_list:
-                self.syn_n_list.insert(syn.id)
-                self.syn_p_list.delete(syn.id)
+            if syn in self.syn_p_list:
+                self.syn_n_list.insert(syn)
+                self.syn_p_list.delete(syn)
             syn.state = syn.State.NEGATIVE
 
         self.viewer.cv_main.refresh_synapse_state()
@@ -322,11 +322,11 @@ class SynapseCorrector(tk.Tk):
     def _onclick_btn_revert(self):
         if self.syn_n_list.get_id_curselection() is not None:
             item_str = self.syn_n_list.get_str_curselection()
-            self.syn_p_list.insert(item_str)
-            self.syn_n_list.delete(item_str)
+            syn = self.current_synapses.get_synapse(Synapse3D.str_to_id(item_str))
+            self.syn_p_list.insert(syn)
+            self.syn_n_list.delete(syn)
 
             # update state
-            syn = self.current_synapses.get_synapse(int(item_str))
             syn.state = syn.State.POSITIVE
             self.viewer.cv_main.refresh_synapse_state()
 
@@ -334,19 +334,19 @@ class SynapseCorrector(tk.Tk):
         if self.syn_p_list.get_id_curselection() is not None:
             selected_id = self.syn_p_list.get_id_curselection()
             item_str = self.syn_p_list.get_str_curselection()
-            self.syn_n_list.insert(item_str)
-            self.syn_p_list.delete(item_str)
+            syn = self.current_synapses.get_synapse(Synapse3D.str_to_id(item_str))
+            self.syn_n_list.insert(syn)
+            self.syn_p_list.delete(syn)
             self.syn_p_list.list.selection_set(selected_id)
 
             # update state
-            syn = self.current_synapses.get_synapse(int(item_str))
             syn.state = syn.State.NEGATIVE
             self.viewer.cv_main.refresh_synapse_state()
 
     def _onclick_btn_save(self):
         self.busymanager.busy()
         is_last = self.current_img_id == self.img_list.list.size() - 1
-        if self.viewer.save(self.savedir, self.syn_n_list.list.get(0, tk.END), is_last):
+        if self.viewer.save(self.savedir, self.syn_n_list.get_sid_list(), is_last):
             self.img_list.set_bg_color(self.current_img_id, '#99FF99')
             # select next image
             if not is_last:
@@ -380,15 +380,15 @@ class SynapseCorrector(tk.Tk):
 
         if is_reject:
             for syn in synapses:
-                if syn.id in self.syn_p_list:
-                    self.syn_n_list.insert(syn.id)
-                    self.syn_p_list.delete(syn.id)
+                if syn in self.syn_p_list:
+                    self.syn_n_list.insert(syn)
+                    self.syn_p_list.delete(syn)
                     syn.state = syn.State.NEGATIVE
         else:
             for syn in synapses:
-                if syn.id in self.syn_n_list:
-                    self.syn_n_list.delete(syn.id)
-                    self.syn_p_list.insert(syn.id)
+                if syn in self.syn_n_list:
+                    self.syn_n_list.delete(syn)
+                    self.syn_p_list.insert(syn)
                     syn.state = syn.State.POSITIVE
 
         self.viewer.cv_main.refresh_synapse_state()

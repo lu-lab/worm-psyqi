@@ -21,6 +21,13 @@ class Synapse3D(object):
         self.prop = prop
         self.state = self.State.NONE
 
+    def __str__(self):
+        return '%d (%d)' % (self.id, self.prop['area'])
+
+    @staticmethod
+    def str_to_id(text):
+        return int(text.split(' ')[0])
+
     def is_in(self, roi):
         """
         check if the center of this synapse is inside the roi

@@ -139,24 +139,25 @@ class WormImage(object):
             with TiffFile(file_raw) as tif:
                 axes = tif.series[0].axes
                 array = tif.asarray()
-                metadata = tif.imagej_metadata['Info']
-                if metadata is not None:
-                    scaling_axis = re.findall('Scaling\|Distance\|Id #(\d) = (.+)\n', metadata)
-                    scaling_value = re.findall('Scaling\|Distance\|Value #(\d) = (.+)\n', metadata)
-                    map_id_axis = {}
-                    scaling_xyz = [None, None, None]
-                    for s_axis in scaling_axis:
-                        map_id_axis[s_axis[0]] = s_axis[1]
-                    for s_value in scaling_value:
-                        s_ax = map_id_axis[s_value[0]]
-                        if s_ax.lower() == 'x':
-                            scaling_xyz[0] = float(s_value[1])
-                        elif s_ax.lower() == 'y':
-                            scaling_xyz[1] = float(s_value[1])
-                        elif s_ax.lower() == 'z':
-                            scaling_xyz[2] = float(s_value[1])
-                    if None not in scaling_xyz:
-                        kwargs['scaling_xyz'] = tuple(scaling_xyz)
+                if 'Info' in tif.imagej_metadata:
+                    metadata = tif.imagej_metadata['Info']
+                    if metadata is not None:
+                        scaling_axis = re.findall('Scaling\|Distance\|Id #(\d) = (.+)\n', metadata)
+                        scaling_value = re.findall('Scaling\|Distance\|Value #(\d) = (.+)\n', metadata)
+                        map_id_axis = {}
+                        scaling_xyz = [None, None, None]
+                        for s_axis in scaling_axis:
+                            map_id_axis[s_axis[0]] = s_axis[1]
+                        for s_value in scaling_value:
+                            s_ax = map_id_axis[s_value[0]]
+                            if s_ax.lower() == 'x':
+                                scaling_xyz[0] = float(s_value[1])
+                            elif s_ax.lower() == 'y':
+                                scaling_xyz[1] = float(s_value[1])
+                            elif s_ax.lower() == 'z':
+                                scaling_xyz[2] = float(s_value[1])
+                        if None not in scaling_xyz:
+                            kwargs['scaling_xyz'] = tuple(scaling_xyz)
 
                 self._read_img(array, axes, **kwargs)
 

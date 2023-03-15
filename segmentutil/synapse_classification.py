@@ -217,7 +217,7 @@ class SynapseClassifier_RF(SynapseClassifier):
     def init_model(self, **kwargs):
         param_grid = {
             'max_depth': range(3, 13, 3),
-            'max_features': ['auto', 'sqrt', 'log2'],
+            'max_features': ['sqrt', 'log2'],
             # 'min_samples_leaf': [3, 4, 5],
             # 'min_samples_split': [8, 10, 12],
             'n_estimators': [32, 64, 128, ]
@@ -230,7 +230,7 @@ class SynapseClassifier_RF(SynapseClassifier):
     def save_model(self, save_dir: str):
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        self.logger.info("Save trained model (best params = %s)\n" % self._model.best_params_)
+        self.logger.info("Save trained model (params = %s)\n" % self._best_estimator.get_params())
         joblib.dump(self._best_estimator, os.path.join(save_dir, 'sk_rf_%s.dump' % self.name))
         # self.logger.info("Save trained model (params = %s)\n" % self._model.get_params())
         # joblib.dump(self._model, os.path.join(save_dir, 'sk_rf_%s.dump' % self.name))
