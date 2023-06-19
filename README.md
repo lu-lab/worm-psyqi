@@ -17,4 +17,9 @@ You will see your shell has (wormpsyqi) at the start as below.
 ```
 
 ## Run the pipeline
-Please see [Running_guide.pdf](./Running_guide.pdf)
+After installing and activating the environment, you can run WormPsyQi as below.
+```consol
+(wormpsyqi) $ python -m gui.main
+```
+
+See the [running guide](./running_guide.md) for more information.
