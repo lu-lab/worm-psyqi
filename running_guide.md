@@ -17,10 +17,12 @@ Refer to the [readme](./Readme.md#run-the-pipeline) to launch the pipeline GUI.
 ***
 ### Main GUI
 
-<figure id='figure1' style="display: flex; flex-direction: column; align-items: center;">
-    <img src="./resources/running_guide/running_guide_figure1.png" alt="Main GUI" style="max-width:60%;"/>
-    <figcaption><i>Figure 1:</i> Main GUI</figcaption>    
-</figure>
+<p id="figure1">
+
+![Figure 1](./resources/running_guide/running_guide_figure1.png)
+><p align="center"><i>Figure 1:</i> Main GUI</p>
+
+</p>
 
 The main GUI comprises two panels as seen in [Figure 1](#figure1).
 1. Control panel
@@ -38,27 +40,31 @@ The main GUI comprises two panels as seen in [Figure 1](#figure1).
 ***
 ### Settings
 
-<figure id='figure2' style="display: flex; flex-direction: column; align-items: center;">
-    <img src="./resources/running_guide/running_guide_figure2.png" alt="Settings Tab" style="max-width:60%;"/>
-    <figcaption><i>Figure 2:</i> <b>Settings tab before selecting a base directory.</b> Note that <i>‘Base Directory (Full)’</i> and <i>‘Raw Directory’</i> fields are highlighted in red, indicating that input is required. Once a value is inputted, they will turn normal. Also, <i>‘Channel Order (raw)’</i> and <i>‘Channel Name’</i> fields are void until the <i>‘Base Directory (Full)’</i> field is filled.</figcaption>
-</figure>
+<p id="figure2">
 
-<figure id='figure3' style="display: flex; flex-direction: column; align-items: center;">
-    <img src="./resources/running_guide/running_guide_figure3.png" alt="Settings Tab" style="max-width:60%;"/>
-    <figcaption><i>Figure 3:</i> <b>Settings tab after selecting a base directory.</b> Note that the dropdown lists and text have appeared next to <i>‘Channel Order (raw)’</i> and <i>‘Channel Name’</i> fields.</figcaption>
-</figure>
+![Figure 2](./resources/running_guide/running_guide_figure2.png)
+><p align="center"><i>Figure 2:</i> <b>Settings tab before selecting a base directory.</b> Note that <i>‘Base Directory (Full)’</i> and <i>‘Raw Directory’</i> fields are highlighted in red, indicating that input is required. Once a value is inputted, they will turn normal. Also, <i>‘Channel Order (raw)’</i> and <i>‘Channel Name’</i> fields are void until the <i>‘Base Directory (Full)’</i> field is filled.</p>
+
+</p>
+
+<p id="figure3">
+
+![Figure 3](./resources/running_guide/running_guide_figure3.png)
+><p align="center"><i>Figure 3:</i> <b>Settings tab after selecting a base directory.</b> Note that the dropdown lists and text have appeared next to <i>‘Channel Order (raw)’</i> and <i>‘Channel Name’</i> fields.</p>
+
+</p>
 
 1. Base Directory
     - The base directory is where the user has input data and where PsyQi will save output data.
         1) Select Base Directory: Open a base directory selection dialog (see [Figure 4](#figure4)) that enables users to select a base directory.
         2) Base Directory (Full): After selecting a base directory in the dialog, the full path of the selected directory appears in the text box. Users can also directly edit the text.
 
+<p id="figure4">
 
-<figure id='figure4' style="display: flex; flex-direction: column; align-items: center;">
-    <img src="./resources/running_guide/running_guide_figure4.png" alt="Base directory selection dialog" style="max-width:60%;"/>
-    <figcaption><i>Figure 4:</i> <b>Base directory selection dialog</b></figcaption>
-</figure>
+![Figure 4](./resources/running_guide/running_guide_figure4.png)
+><p align="center"><i>Figure 4:</i> <b>Base directory selection dialog</b></p>
 
+</p>
 
 2. Raw Directory
     - The Raw directory is a subdirectory that contains the input microscopy images.
@@ -84,12 +90,12 @@ The main GUI comprises two panels as seen in [Figure 1](#figure1).
         2) Channel Name
             - This section provides additional information about the channels by reading the metadata from the first image file in the raw directory.
 
+<p id="figure5">
 
-<figure id='figure5' style="display: flex; flex-direction: column; align-items: center;">
-    <img src="./resources/running_guide/running_guide_figure5.png" alt="Channel Order dropdown menu" style="max-width:60%;"/>
-    <figcaption><i>Figure 5:</i> <b>Channel Order dropdown menu</b></figcaption>
-</figure>
+![Figure 5](./resources/running_guide/running_guide_figure5.png)
+><p align="center"><i>Figure 5:</i> <b>Channel Order dropdown menu</b></p>
 
+</p>
 
 8. Small Synapse Cutoff
     - In the prediction process, segmented synapses of equal or less volume than this cutoff value will be eliminated.
@@ -103,10 +109,12 @@ The main GUI comprises two panels as seen in [Figure 1](#figure1).
 
 ### Mask
 
-<figure id='figure6' style="display: flex; flex-direction: column; align-items: center;">
-    <img src="./resources/running_guide/running_guide_figure6.png" alt="Mask Tab" style="max-width:60%;"/>
-    <figcaption><i>Figure 6:</i> <b>Mask tab</b></figcaption>
-</figure>
+<p id="figure6">
+
+![Figure 6](./resources/running_guide/running_guide_figure6.png)
+><p align="center"><i>Figure 6:</i> <b>Mask tab</b></p>
+
+</p>
 
 In the mask step, the pipeline takes raw images from the raw directory and segments out neurites, generating binary mask images in the mask directory. If there are already mask images in the mask folder, PsyQi will bypass them instead of reprocessing them.
 
@@ -150,15 +158,20 @@ In the prediction step, the pipeline takes 1) raw images from the raw directory,
 3. Use the neurite mask
     - If checked, synaptic puncta outside of the neurite mask from the mask step will be removed.
 
-<figure id='figure7' style="display: flex; flex-direction: column; align-items: center;">
-    <img src="./resources/running_guide/running_guide_figure7.png" alt="Predict Tab" style="max-width:60%;"/>
-    <figcaption><i>Figure 7:</i> <b>Predict tab with ‘Built-in’ is selected in the Classifier menu</b></figcaption>
-</figure>
+<p id="figure7">
 
-<figure id='figure8' style="display: flex; flex-direction: column; align-items: center;">
-    <img src="./resources/running_guide/running_guide_figure8.png" alt="Predict Tab" style="max-width:60%;"/>
-    <figcaption><i>Figure 8:</i> <b>Predict tab with ‘Custom’ is selected in the Classifier menu</b></figcaption>
-</figure>
+![Figure 7](./resources/running_guide/running_guide_figure7.png)
+><p align="center"><i>Figure 7:</i> <b>Predict tab with ‘Built-in’ is selected in the Classifier menu</b></p>
+
+</p>
+
+
+<p id="figure8">
+
+![Figure 8](./resources/running_guide/running_guide_figure8.png)
+><p align="center"><i>Figure 8:</i> <b>Predict tab with ‘Custom’ is selected in the Classifier menu</b></p>
+
+</p>
 
 ***
 ### Correct
@@ -167,10 +180,12 @@ In the correction step, the pipeline takes the predicted synapse images from the
 ***
 ### Quantify
 
-<figure id='figure9' style="display: flex; flex-direction: column; align-items: center;">
-    <img src="./resources/running_guide/running_guide_figure9.png" alt="Quantify Tab" style="max-width:60%;"/>
-    <figcaption><i>Figure 9:</i> <b>Quantify tab</b></figcaption>
-</figure>
+<p id="figure9">
+
+![Figure 9](./resources/running_guide/running_guide_figure9.png)
+><p align="center"><i>Figure 9:</i> <b>Quantify tab</b></p>
+
+</p>
 
 In the quantification step, the pipeline takes the segmented synapse images from the "Quantification In Dir." directory and generates the quantification results in the "Quantification Out Dir." directory. These results include the position and size of each synapse, and some basic statistics such as the average number of synapses.
 
