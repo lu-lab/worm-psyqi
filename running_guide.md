@@ -1,7 +1,7 @@
 # WormPsyQi Running Guide
 
 ## How to Start
-Refer to the [readme](./Readme.md#run-the-pipeline) to launch the pipeline GUI.
+Refer to the [readme](./README.md#run-the-pipeline) to launch the pipeline GUI.
 ***
 
 ## GUI
