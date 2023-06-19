@@ -17,7 +17,9 @@
         - Undo (Ctrl + Z) is not working. If you paint a wrong pixel accidently, you need to use ‘Eraser Tool’ on the toolbar to fix it.
     6) Click ‘File > Save As > Tiff…’ on the Menu bar to save the labeled image once you’ve done with labeling
 3. Tutorial video
-    - [Video link](https://youtu.be/mjSKwDLQ7qw)
+
+[![Tutorial video link](http://img.youtube.com/vi/mjSKwDLQ7qw/0.jpg)](http://www.youtube.com/watch?v=mjSKwDLQ7qw)
+
 4. Useful shortcuts of FIJI
 
 ![Figure 1](./resources/running_guide/labeling_guide_figure1.jpg)
