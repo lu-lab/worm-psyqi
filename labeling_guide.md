@@ -16,13 +16,8 @@
         - If the boundary of the synapse is ambiguous due to excess signal from the red channel, then open ‘Image > Color > Channel Tools…’ (Ctrl + Shift + Z) and toggle off ‘Channel 1’ (the red channel) to see only the green and blue channels
         - Undo (Ctrl + Z) is not working. If you paint a wrong pixel accidently, you need to use ‘Eraser Tool’ on the toolbar to fix it.
     6) Click ‘File > Save As > Tiff…’ on the Menu bar to save the labeled image once you’ve done with labeling
-
 3. Tutorial video
-
-<div style="display: flex; justify-content: center;">
-    <iframe src="https://youtu.be/mjSKwDLQ7qw" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-</div>
-
+    - [Video link](https://youtu.be/mjSKwDLQ7qw)
 4. Useful shortcuts of FIJI
 
 ![Figure 1](./resources/running_guide/labeling_guide_figure1.jpg)
