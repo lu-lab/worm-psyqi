@@ -339,8 +339,7 @@ def predict(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_synapse_cutoff,
             train_dir_full = resource_path(os.path.join('synapse_classifiers', 'I5_CLA1_RFCV_v112'))
             model = SynapseClassifier_RF
         elif option_classifier[1] == 'RAB-3':
-            # TODO: train RAB-3 diffusive classifier
-            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'I5_CLA1_RFCV_v112'))
+            train_dir_full = resource_path(os.path.join('synapse_classifiers', 'ASK_RAB3_RFCV_v112'))
             model = SynapseClassifier_RF
     elif option_classifier[0] == 'Custom':
         train_dir_full = os.path.join(base_dir, option_classifier[1])
