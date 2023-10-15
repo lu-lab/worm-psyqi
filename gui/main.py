@@ -329,12 +329,6 @@ class SynapseSegmentator(tk.Tk):
                                                                 BUILT_IN_CLASSIFIER_OPTIONS[0], cur_row)
         self.input_widgets.extend(self.option_builtin_classifier.rbuttons)
         cur_row += 1
-        # add test all classifier button
-        self.btn_test_all_classifier = ttk.Button(self.tab_predict, text='Test all built-in classifiers',
-                                                    command=self._onbutton_test_all_classifier)
-        self.btn_test_all_classifier.grid(row=cur_row, columnspan=2, sticky=tk.NSEW)
-        self.input_widgets.append(self.btn_test_all_classifier)
-        cur_row += 1
 
         self.tp_dir_classifier = WidgetLabelEntry(self.tab_predict, 'Custom Classifier Dir.', 'classifier', cur_row,
                                                   strvar=self.dir_classifier.var)
@@ -345,6 +339,13 @@ class SynapseSegmentator(tk.Tk):
         # Use the neurite mask or not
         self.tp_masking = WidgetLabelCheck(self.tab_predict, 'Use the neurite mask', cur_row)
         self.input_widgets.append(self.tp_masking.check)
+        cur_row += 1
+
+        # add test all classifier button
+        self.btn_test_all_classifier = ttk.Button(self.tab_predict, text='Test all built-in classifiers',
+                                                    command=self._onbutton_test_all_classifier)
+        self.btn_test_all_classifier.grid(row=cur_row, columnspan=2, sticky=tk.NSEW)
+        self.input_widgets.append(self.btn_test_all_classifier)
         cur_row += 1
 
         # Single-voxel elimination or not
@@ -553,9 +554,9 @@ class SynapseSegmentator(tk.Tk):
     def _on_change_option_classifier(self, *args):
         if self.option_classifier.var.get() == CLASSIFIER_OPTIONS[0]:  # built-in
             self.option_builtin_classifier.show_widget()
-            # show btn_test_all_classifier
-            self.btn_test_all_classifier.grid(row=7, columnspan=2, sticky=tk.NSEW)
             self.tp_dir_classifier.hide_widget()
+            # show btn_test_all_classifier
+            self.btn_test_all_classifier.grid(row=9, columnspan=2, sticky=tk.NSEW)
         else:  # custom
             self.option_builtin_classifier.hide_widget()
             # hide btn_test_all_classifier
