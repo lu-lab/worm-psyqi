@@ -15,7 +15,7 @@ from ttkthemes import ThemedStyle
 from gui.widgets_main import ScrolledLogger, WidgetLabelFrame, WidgetLabelEntry, WidgetLabelOption, \
     WidgetLabelRadiobutton, WidgetLabelCheck
 from scripts.detect_autofluorescent import remove_gut
-from segment import mask_unet, mask_edge, train, predict, correct, quantify, watershed
+from segment import mask_unet, mask_edge, train, predict, test_all_classifiers, correct, quantify, watershed
 from segmentutil.synapse_classification import SynapseClassifier_SVM, SynapseClassifier_AdaBoost, SynapseClassifier_RF
 
 MASKING_OPTIONS = ["UNet (neurite.pt)", "UNet (multi_scale.pt)", "Edge detection"]
@@ -329,6 +329,13 @@ class SynapseSegmentator(tk.Tk):
                                                                 BUILT_IN_CLASSIFIER_OPTIONS[0], cur_row)
         self.input_widgets.extend(self.option_builtin_classifier.rbuttons)
         cur_row += 1
+        # add test all classifier button
+        self.btn_test_all_classifier = ttk.Button(self.tab_predict, text='Test all built-in classifiers',
+                                                    command=self._onbutton_test_all_classifier)
+        self.btn_test_all_classifier.grid(row=cur_row, columnspan=2, sticky=tk.NSEW)
+        self.input_widgets.append(self.btn_test_all_classifier)
+        cur_row += 1
+
         self.tp_dir_classifier = WidgetLabelEntry(self.tab_predict, 'Custom Classifier Dir.', 'classifier', cur_row,
                                                   strvar=self.dir_classifier.var)
         self.tp_dir_classifier.hide_widget()
@@ -546,9 +553,13 @@ class SynapseSegmentator(tk.Tk):
     def _on_change_option_classifier(self, *args):
         if self.option_classifier.var.get() == CLASSIFIER_OPTIONS[0]:  # built-in
             self.option_builtin_classifier.show_widget()
+            # show btn_test_all_classifier
+            self.btn_test_all_classifier.grid(row=7, columnspan=2, sticky=tk.NSEW)
             self.tp_dir_classifier.hide_widget()
         else:  # custom
             self.option_builtin_classifier.hide_widget()
+            # hide btn_test_all_classifier
+            self.btn_test_all_classifier.grid_forget()
             self.tp_dir_classifier.show_widget()
 
     def _get_channel_order_text(self):
@@ -850,6 +861,47 @@ class SynapseSegmentator(tk.Tk):
         self._show_message = show_message
         self._async_worker.start()
         self.after(10, self._check_async_worker)
+
+    def _set_worker_test_all_classifier(self):
+        assert self.option_classifier.var.get() == CLASSIFIER_OPTIONS[0]
+
+        self._async_worker = threading.Thread(target=test_all_classifiers,
+                                              args=(self.dir_base.var.get(),
+                                                    self.dir_raw.subvars[0].get(),
+                                                    self.dir_mask.var.get(),
+                                                    self.dir_pred.var.get(),
+                                                    int(self.process_number.var.get()),
+                                                    int(self.small_synapse_cutoff.var.get()),
+                                                    self._get_channel_order_text(),
+                                                    self.tp_masking.var.get(),
+                                                    True,
+                                                    self.fr_log.log_queue,))
+
+        self.logger_tofile.info(
+            'version=%s | function=%s | rawdir=%s | maskdir=%s | preddir=%s | n_p=%d | small_cutoff=%d | channel=%s | masking=%s' % (
+                self.version, 'test_all_classifiers',
+                self.dir_raw.subvars[0].get(),
+                self.dir_mask.var.get(),
+                self.dir_pred.var.get(),
+                int(self.process_number.var.get()),
+                int(self.small_synapse_cutoff.var.get()),
+                self._get_channel_order_text(),
+                self.tp_masking.var.get(),
+            ))
+
+    def _onbutton_test_all_classifier(self):
+        if self._check_common_error():
+            return
+        # prevent from altering options or start another process
+        self._disable_inputs()
+
+        # do job asynchronously and register callback
+        self._set_worker_test_all_classifier()
+        self._ondone = self._enable_inputs
+        self._show_message = True
+        self._async_worker.start()
+        self.after(10, self._check_async_worker)
+
 
     def _onbutton_go_correcting(self):
         if self._check_common_error():

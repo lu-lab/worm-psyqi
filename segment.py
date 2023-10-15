@@ -426,6 +426,117 @@ def predict(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_synapse_cutoff,
                         '[%d/%d] Done predicting %s' % (i + 1, len(raw_images), os.path.basename(file_raw)))
     logger.info('Finish prediction using the trained model')
 
+def test_all_classifiers(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_synapse_cutoff, channel_text,
+                         b_masking, minimize_storage=True, log_q=None):
+    """
+
+    Args:
+        base_dir: Base directory
+        raw_dir: Raw files directory
+        predict_dir: Prediction output directory
+        n_p: number of processes to use
+        small_synapse_cutoff: threshold for removing small synapses
+        channel_text: Channel order text
+        b_masking: If true, apply masking
+        minimize_storage: If true, omit some intermediate result images
+        log_q:
+        **kwargs:
+
+    Returns:
+
+    """
+    logger = init_logger_with_log_queue(log_q)
+    logger.info('Start testing all default models to the first image')
+
+    # directory checking
+    if not os.path.isdir(os.path.join(base_dir, raw_dir)):
+        logger.error("Raw directory doesn't exist. Stop processing.")
+        return
+
+    raw_images = get_all_microscopy_images(os.path.join(base_dir, raw_dir))
+    if len(raw_images) == 0:
+        logger.warning("No images in raw directory. Stop processing.")
+        return
+
+    output_dir = os.path.join(base_dir, predict_dir)
+    output_dir_overlay = os.path.join(base_dir, predict_dir, 'overlay')
+    os.makedirs(output_dir_overlay, exist_ok=True)
+
+    # Synapse channel exists?
+    if 'N' in channel_text:
+        b_singlechannel = False
+    else:
+        b_singlechannel = True
+
+    # set classifiers
+    list_modelname = []
+    models = []
+    list_train_dir_full = []
+    if b_singlechannel:
+        # TODO: further categorize
+        list_train_dir_full.append(resource_path(os.path.join('synapse_classifiers', 'NSM_CLA1_no_mask_RFCV_v112')))
+        models.append(SynapseClassifier_RF)
+        list_modelname.append('CLA-1')
+    else:
+        list_train_dir_full.append(resource_path(os.path.join('synapse_classifiers', 'otIs612_GRASP_RFCV_v112')))
+        models.append(SynapseClassifier_RF)
+        list_modelname.append('GRASP (sparse)')
+        list_train_dir_full.append(resource_path(os.path.join('synapse_classifiers', 'otIs653_GRASP_RFCV_v112')))
+        models.append(SynapseClassifier_RF)
+        list_modelname.append('GRASP (dense)')
+        list_train_dir_full.append(resource_path(os.path.join('synapse_classifiers', 'I5_CLA1_RFCV_v112')))
+        models.append(SynapseClassifier_RF)
+        list_modelname.append('CLA-1')
+        list_train_dir_full.append(resource_path(os.path.join('synapse_classifiers', 'ASK_RAB3_RFCV_v112')))
+        models.append(SynapseClassifier_RF)
+        list_modelname.append('RAB-3')
+
+    for i_model in range(len(models)):
+        model = models[i_model]
+        modelname = list_modelname[i_model]
+        train_dir_full = list_train_dir_full[i_model]
+        if model == SynapseClassifier_SVM:
+            classifier_1st = SynapseClassifier_SVM('1st', True, logger)
+            classifier_2nd = SynapseClassifier_SVM('2nd', False, logger)
+        elif model == SynapseClassifier_RF:
+            classifier_1st = SynapseClassifier_RF('1st', logger=logger)
+            classifier_2nd = SynapseClassifier_RF('2nd', logger=logger)
+        elif model == SynapseClassifier_AdaBoost:
+            classifier_1st = SynapseClassifier_AdaBoost('1st', logger)
+            classifier_2nd = SynapseClassifier_AdaBoost('2nd', logger)
+        else:
+            logger.error("Undefined classifier model. Stop processing.")
+            return
+        
+        if not (classifier_1st.load_model(train_dir_full) and classifier_2nd.load_model(train_dir_full)):  # load dump
+            logger.error("Trained model doesn't exist. Stop processing.")
+            return
+        # iterate raw images and do the prediction
+        file_raw = raw_images[0]
+        file_name = os.path.basename(file_raw).split('.')[0]
+        file_label = os.path.join(output_dir, '%s_%s_pred.tif' % (modelname, file_name))
+        file_overlay = os.path.join(output_dir_overlay, '%s_%s_pred_overlay.tif' % (modelname, file_name))
+
+        logger.info(
+            '[%d/%d] Start predicting %s with %s model' % (i_model + 1, len(models),
+                                                           os.path.basename(file_raw), modelname))
+        # prediction here
+        worm_img = WormImage(base_dir, file_raw, minimize_storage=minimize_storage, channel=channel_text,
+                                dir_mask=mask_dir, apply_masking=b_masking, logger=logger)
+        worm_img.preprocess()
+        worm_img.masking()
+        try:
+            pred_label = worm_img.predict(classifier_1st.predict_proba, classifier_2nd.predict,
+                                            small_synapse_cutoff=small_synapse_cutoff, num_process=n_p)
+            worm_img.write_predicted_label_image(pred_label, file_label, file_overlay)
+        except BaseException as ex:
+            logger.error(ex)
+        finally:
+            logger.info(
+                '[%d/%d] Done predicting %s with %s model' % (i_model + 1, len(models),
+                                                               os.path.basename(file_raw), modelname))
+    logger.info('Finish testing all default models to the first image')
+
 
 def _watershed(i, n, base_dir, file_raw, input_dir, output_dir, output_dir_overlay, output_dir_color, min_distance,
                channel_text):
