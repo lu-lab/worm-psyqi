@@ -491,6 +491,8 @@ def test_all_classifiers(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_sy
         models.append(SynapseClassifier_RF)
         list_modelname.append('RAB-3')
 
+    n_test = len(models) * len(raw_images[:3])
+    n_test_done = 0
     for i_model in range(len(models)):
         model = models[i_model]
         modelname = list_modelname[i_model]
@@ -511,30 +513,31 @@ def test_all_classifiers(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_sy
         if not (classifier_1st.load_model(train_dir_full) and classifier_2nd.load_model(train_dir_full)):  # load dump
             logger.error("Trained model doesn't exist. Stop processing.")
             return
-        # iterate raw images and do the prediction
-        file_raw = raw_images[0]
-        file_name = os.path.basename(file_raw).split('.')[0]
-        file_label = os.path.join(output_dir, '%s_%s_pred.tif' % (modelname, file_name))
-        file_overlay = os.path.join(output_dir_overlay, '%s_%s_pred_overlay.tif' % (modelname, file_name))
+        
+        
+        # test over the first 2 images
+        for file_raw in raw_images[:2]:
+            n_test_done += 1
+            file_name = os.path.basename(file_raw).split('.')[0]
+            file_label = os.path.join(output_dir, '%s_%s_pred.tif' % (modelname, file_name))
+            file_overlay = os.path.join(output_dir_overlay, '%s_%s_pred_overlay.tif' % (modelname, file_name))
 
-        logger.info(
-            '[%d/%d] Start predicting %s with %s model' % (i_model + 1, len(models),
-                                                           os.path.basename(file_raw), modelname))
-        # prediction here
-        worm_img = WormImage(base_dir, file_raw, minimize_storage=minimize_storage, channel=channel_text,
-                                dir_mask=mask_dir, apply_masking=b_masking, logger=logger)
-        worm_img.preprocess()
-        worm_img.masking()
-        try:
-            pred_label = worm_img.predict(classifier_1st.predict_proba, classifier_2nd.predict,
-                                            small_synapse_cutoff=small_synapse_cutoff, num_process=n_p)
-            worm_img.write_predicted_label_image(pred_label, file_label, file_overlay)
-        except BaseException as ex:
-            logger.error(ex)
-        finally:
             logger.info(
-                '[%d/%d] Done predicting %s with %s model' % (i_model + 1, len(models),
-                                                               os.path.basename(file_raw), modelname))
+                '[%d/%d] Start predicting %s with %s model' % (n_test_done, n_test, os.path.basename(file_raw), modelname))
+            # prediction here
+            worm_img = WormImage(base_dir, file_raw, minimize_storage=minimize_storage, channel=channel_text,
+                                    dir_mask=mask_dir, apply_masking=b_masking, logger=logger)
+            worm_img.preprocess()
+            worm_img.masking()
+            try:
+                pred_label = worm_img.predict(classifier_1st.predict_proba, classifier_2nd.predict,
+                                                small_synapse_cutoff=small_synapse_cutoff, num_process=n_p)
+                worm_img.write_predicted_label_image(pred_label, file_label, file_overlay)
+            except BaseException as ex:
+                logger.error(ex)
+            finally:
+                logger.info(
+                    '[%d/%d] Done predicting %s with %s model' % (n_test_done, n_test, os.path.basename(file_raw), modelname))
     logger.info('Finish testing all default models to the first image')
 
 
