@@ -46,10 +46,12 @@ class Synapse3D(object):
 
 
 class SynapseQT3D(object):
-    def __init__(self, img_label: np.ndarray, img_signal: np.ndarray, img_neurite_mask: np.ndarray = None,
+    def __init__(self, img_label: np.ndarray, img_signal: np.ndarray, img_cell: np.ndarray = None,
+                 img_neurite_mask: np.ndarray = None,
                  is_instance_segmentation=False):
         self._img_label = img_label
         self._img_signal = img_signal
+        self._img_cell = img_cell
         self._img_mask = img_neurite_mask
         self._is_instance = is_instance_segmentation
         self._img_cc = None
@@ -89,7 +91,12 @@ class SynapseQT3D(object):
                 new_label[label == l_p] = l_n
 
             label = new_label
-            props = measure.regionprops(label_image=label, intensity_image=self._img_signal)
+
+            if self._img_cell is not None:
+                intensity_image = np.stack([self._img_signal, self._img_cell], axis=-1)
+            else:
+                intensity_image = self._img_signal
+            props = measure.regionprops(label_image=label, intensity_image=intensity_image)
 
         self._img_cc = label
         self._set_synapses(props)
@@ -353,6 +360,9 @@ class SynapseQT3D(object):
 
     def get_small_synapses(self, min_area) -> List[Synapse3D]:
         return [s for s in self._synapses if s.prop.area < min_area]
+    
+    def get_large_synapses(self, max_area) -> List[Synapse3D]:
+        return [s for s in self._synapses if s.prop.area > max_area]
 
     def deep_phynotyping(self):
         """

@@ -17,9 +17,10 @@ dependencies:
   - nd2reader=3.3.0
   - pip
   - pip:
-      - aicsimageio==4.9.4
+      - aicsimageio[all]==4.9.4
       - aicspylibczi==3.1.0
       - graph-theory==2022.4.2
       - tifffile==2023.2.28
       - ttkthemes==3.2.2
       - joblib==1.2.0
+      - bioformats_jar==2020.5.27

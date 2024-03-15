@@ -676,7 +676,8 @@ def _quantify(i, n, col_props, base_dir, file_raw, mask_dir, input_dir, output_d
     else:
         img_mask = imread(file_neurite_mask) > 0
 
-    qt = SynapseQT3D(img_label, worm_img.get_img_3d_synapse_marker(), img_mask, is_instance_segmentation)
+    qt = SynapseQT3D(img_label, worm_img.get_img_3d_synapse_marker(), worm_img.get_img_3d_cellular_marker(),
+                     img_mask, is_instance_segmentation)
     # write result
     with open(file_result, 'w') as h:
         h.write(
@@ -746,7 +747,7 @@ def quantify(base_dir, raw_dir, mask_dir, input_dir, output_dir, n_p, channel_te
     # quantification
     # column for individual synapse feature file
     col_props = ['area', 'mean_intensity', 'max_intensity', 'min_intensity', 'bbox_area', 'equivalent_diameter',
-                 'euler_number', 'extent', 'filled_area', 'major_axis_length', 'minor_axis_length']
+                 'euler_number', 'extent', 'filled_area', 'major_axis_length', 'minor_axis_length',]
     # lists for animal-wise feature
     group_stats = []
     # 8 for 'Number', 'Total Volume (pixels)', 'Total Volume (m^3)',

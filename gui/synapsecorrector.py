@@ -97,6 +97,7 @@ class SynapseCorrector(tk.Tk):
         edit.add_command(label="Revert                         ", font=fwf, command=self._onclick_btn_revert)
         edit.add_separator()
         edit.add_command(label="Remove small blobs", font=fwf, command=self._reject_small_synapses)
+        edit.add_command(label="Remove large blobs", font=fwf, command=self._reject_large_synapses)
         edit.add_command(label="Reject all inside of ROI       ", font=fwf,
                          command=functools.partial(self._on_block_action, is_inside=True, is_reject=True,
                                                    is_single_z=False))
@@ -306,6 +307,18 @@ class SynapseCorrector(tk.Tk):
                                            parent=self,
                                            minvalue=0)
         synapses = self.current_synapses.get_small_synapses(min_area)
+        for syn in synapses:
+            if syn in self.syn_p_list:
+                self.syn_n_list.insert(syn)
+                self.syn_p_list.delete(syn)
+            syn.state = syn.State.NEGATIVE
+
+        self.viewer.cv_main.refresh_synapse_state()
+    
+    def _reject_large_synapses(self):
+        max_area = simpledialog.askinteger("Are filtering", "Reject synapses whose volume is over",
+                                           parent=self)
+        synapses = self.current_synapses.get_large_synapses(max_area)
         for syn in synapses:
             if syn in self.syn_p_list:
                 self.syn_n_list.insert(syn)
