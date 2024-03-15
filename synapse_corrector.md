@@ -80,7 +80,7 @@ Once you have successfully corrected your synapses, it's time to save your progr
 ### Exploring Additional Features
 The Synapse Corrector GUI comes with a set of extra functionalities available under the "Edit" menu in the menu bar. One of these is the "Edit contrast" option, which opens a dedicated window for adjusting image contrast, thus enabling better visualization and precision in correction.
 
-Another function, "Remove small blobs", facilitates the exclusion of all synapses under a certain volume threshold. This feature can be especially useful for focusing on larger, more significant synapses and eliminating potential noise.
+Other functions, "Remove small blobs" and "Remove large blobs", facilitates the exclusion of all synapses under or over a certain volume threshold. This feature can be especially useful for focusing on more significant synapses and eliminating potential noise and autofluorescence.
 
 The Synapse Corrector GUI is designed with an evolving nature in mind. We plan to continually incorporate more features and improvements in the future to better meet your needs. We invite you to explore and utilize these tools for an enhanced user experience.
 

@@ -8,6 +8,7 @@ import re
 import sys
 import time
 from multiprocessing import current_process, Pool
+from collections.abc import Iterable
 
 import numpy as np
 import torch
@@ -642,7 +643,7 @@ def correct(base_dir, predict_dir, correct_dir, close_callback, log_q=None):
     window_corrector.load_images_from_dir(input_dir)
 
 
-def _quantify(i, n, col_props, base_dir, file_raw, mask_dir, input_dir, output_dir, channel_text):
+def _quantify(i, n, col_props, col_props_channel, base_dir, file_raw, mask_dir, input_dir, output_dir, channel_text):
     # setup logger for this process
     logger = logging.getLogger()
     file_name = os.path.basename(file_raw).split('.')[0]
@@ -676,15 +677,35 @@ def _quantify(i, n, col_props, base_dir, file_raw, mask_dir, input_dir, output_d
     else:
         img_mask = imread(file_neurite_mask) > 0
 
-    qt = SynapseQT3D(img_label, worm_img.get_img_3d_synapse_marker(), img_mask, is_instance_segmentation)
+    if 'N' in channel_text:
+        qt = SynapseQT3D(img_label, worm_img.get_img_3d_synapse_marker(), worm_img.get_img_3d_cellular_marker(),
+                        img_mask, is_instance_segmentation)
+    else:
+        qt = SynapseQT3D(img_label, worm_img.get_img_3d_synapse_marker(), None,
+                        img_mask, is_instance_segmentation)
     # write result
+    header = ['Name', 'Synapse ID', 'Centroid_z', 'Centroid_y', 'Centroid_x'] + col_props
+    for col in col_props_channel:
+        if 'S' in channel_text:
+            header += [col + ' (Synapse channel)']
+        if 'N' in channel_text:
+            header += [col + ' (Neuron channel)']
     with open(file_result, 'w') as h:
-        h.write(
-            ','.join(['Name', 'Synapse ID', 'Centroid_z', 'Centroid_y', 'Centroid_x'] + col_props) + '\n')
+        h.write(','.join(header) + '\n')
         for j in range(qt.number()):
             centroid = qt.prop(j, 'centroid')
-            h.write(','.join([file_name, str(j + 1), str(centroid[0]), str(centroid[1]), str(centroid[2])] +
-                             [str(qt.prop(j, col)) for col in col_props]) + '\n')
+            props = []
+            for col in col_props:
+                prop = qt.prop(j, col)
+                props.append(str(prop))
+            for col in col_props_channel:
+                prop = qt.prop(j, col)
+                if isinstance(prop, Iterable):
+                    for prop_ch in prop:
+                        props.append(str(prop_ch))
+                else:
+                    props.append(str(prop))
+            h.write(','.join([file_name, str(j + 1), str(centroid[0]), str(centroid[1]), str(centroid[2])] + props) + '\n')
 
     logger.info('[%d/%d] Done quantifying %s' % (i + 1, n, os.path.basename(file_raw)))
 
@@ -697,6 +718,17 @@ def _quantify(i, n, col_props, base_dir, file_raw, mask_dir, input_dir, output_d
     else:
         total_volume_si = total_volume_px * s_z * s_y * s_x
 
+    
+    list_mean_prop = [qt.mean_prop(col) for col in col_props]
+    list_mean_prop_intensity = []
+    for col in col_props_channel:
+        mean_prop = qt.mean_prop(col)
+        if isinstance(mean_prop, Iterable):
+            for mean_prop_ch in mean_prop:
+                list_mean_prop_intensity.append(mean_prop_ch)
+        else:
+            list_mean_prop_intensity.append(mean_prop)
+
     return ((file_name,
              qt.number(),
              total_volume_px,
@@ -704,7 +736,8 @@ def _quantify(i, n, col_props, base_dir, file_raw, mask_dir, input_dir, output_d
              qt.mean_intensity_of_all_positives(),
              *qt.spatial_dispersion_rms((s_z, s_y, s_x)),
              misd_px, misd_si,
-             *[qt.mean_prop(col) for col in col_props]),
+             *list_mean_prop, 
+             *list_mean_prop_intensity),
             (file_name, *qt.deep_phynotyping())
             )
     # TODO: Mean normalized intensity
@@ -745,15 +778,21 @@ def quantify(base_dir, raw_dir, mask_dir, input_dir, output_dir, n_p, channel_te
 
     # quantification
     # column for individual synapse feature file
-    col_props = ['area', 'mean_intensity', 'max_intensity', 'min_intensity', 'bbox_area', 'equivalent_diameter',
-                 'euler_number', 'extent', 'filled_area', 'major_axis_length', 'minor_axis_length']
+        
+    # Synapse channel exists?
+    col_props = ['area', 'bbox_area', 'equivalent_diameter',
+                 'euler_number', 'extent', 'filled_area', 'major_axis_length', 'minor_axis_length',]
+    col_props_channel = ['mean_intensity', 'max_intensity', 'min_intensity',]
     # lists for animal-wise feature
     group_stats = []
     # 8 for 'Number', 'Total Volume (pixels)', 'Total Volume (m^3)',
     #       'Mean pixel intensity', 'Spatial Dispersion (pixels)', 'Spatial Dispersion (Meters)',
     #       'Mean inter-synapse distance (pixels)', 'Mean inter-synapse distance (Meters)'
     # len(col_props) for mean value of each synapse-wise features
-    avg_group_stat = np.zeros(dtype=float, shape=8 + len(col_props))
+    if 'N' in channel_text:
+        avg_group_stat = np.zeros(dtype=float, shape=8 + len(col_props) + len(col_props_channel) * 2)
+    else:
+        avg_group_stat = np.zeros(dtype=float, shape=8 + len(col_props) + len(col_props_channel))
     deep_phy_stat = []
 
     def parse_result(r, gs, ags, dps):
@@ -769,7 +808,8 @@ def quantify(base_dir, raw_dir, mask_dir, input_dir, output_dir, n_p, channel_te
 
     if n_p > 1:
         logger.info('Work with %d processes' % n_p)
-        args = [(i, len(raw_images), col_props, base_dir, file_raw, mask_dir, input_dir, output_dir, channel_text,)
+        args = [(i, len(raw_images), col_props, col_props_channel,
+                 base_dir, file_raw, mask_dir, input_dir, output_dir, channel_text,)
                 for i, file_raw in enumerate(raw_images)]
         with Pool(n_p, init_logger_with_log_queue, [log_q, ]) as pool:
             results = pool.starmap(_quantify, args)
@@ -782,8 +822,8 @@ def quantify(base_dir, raw_dir, mask_dir, input_dir, output_dir, n_p, channel_te
         logger.info('Work with a single processes')
         # iterate raw images and do the watersheding
         for i, file_raw in enumerate(raw_images):
-            res = _quantify(i, len(raw_images), col_props, base_dir, file_raw, mask_dir, input_dir, output_dir,
-                            channel_text)
+            res = _quantify(i, len(raw_images), col_props, col_props_channel, 
+                            base_dir, file_raw, mask_dir, input_dir, output_dir, channel_text)
             # parsing results
             if res is not None:
                 parse_result(res, group_stats, avg_group_stat, deep_phy_stat)
@@ -792,11 +832,18 @@ def quantify(base_dir, raw_dir, mask_dir, input_dir, output_dir, n_p, channel_te
         avg_group_stat /= len(group_stats)
         group_stats.sort(key=lambda x: x[0])
         group_stats.append(['Average', ] + list(avg_group_stat))
-        with open(os.path.join(base_dir, output_dir, 'quantification_stat.csv'), 'w') as h:
-            h.write(','.join(['Name', 'Number', 'Total Volume (pixels)', 'Total Volume (m^3)',
+
+        header = ['Name', 'Number', 'Total Volume (pixels)', 'Total Volume (m^3)',
                               'Mean pixel intensity', 'Spatial Dispersion (pixels)', 'Spatial Dispersion (Meters)',
                               'Mean inter-synapse distance (pixels)', 'Mean inter-synapse distance (Meters)'
-                              ] + ['Mean ' + col for col in col_props]) + '\n')
+                              ] + ['Mean ' + col for col in col_props]
+        for col in col_props_channel:
+            if 'S' in channel_text:
+                header += ['Mean ' + col + ' (Synapse channel)']
+            if 'N' in channel_text:
+                header += ['Mean ' + col + ' (Neuron channel)']
+        with open(os.path.join(base_dir, output_dir, 'quantification_stat.csv'), 'w') as h:
+            h.write(','.join(header) + '\n')
             h.writelines([','.join([str(s) for s in stat]) + '\n' for stat in group_stats])
 
         with open(os.path.join(base_dir, output_dir, 'quantification_stat_deep.csv'), 'w') as h:
