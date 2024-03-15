@@ -144,7 +144,10 @@ class SynapseQT3D(object):
         if self._synapses is None:
             self._get_cc()
 
-        sum = 0
+        if self._img_cell is not None and key in ['mean_intensity', 'max_intensity', 'min_intensity']:
+            sum = np.array([0, 0], dtype=float)
+        else:
+            sum = 0
         for syn in self._synapses:
             try:
                 val = syn.prop[key]
@@ -157,8 +160,11 @@ class SynapseQT3D(object):
     def mean_prop(self, key):
         if self._synapses is None:
             self._get_cc()
-
-        sum = 0
+        
+        if self._img_cell is not None and key in ['mean_intensity', 'max_intensity', 'min_intensity']:
+            sum = np.array([0, 0], dtype=float)
+        else:
+            sum = 0
         cnt = 0
         for syn in self._synapses:
             try:
@@ -431,13 +437,19 @@ class SynapseQT3D(object):
         f.append(safe_div(np.mean(x_area_large_half), np.mean(x_area_small_half)))
         # 20) Mean of average puncta intensity (average puncta intensity refers to the mean pixel intensity value
         #     / for each puncta)
-        x_mean_intensity = [s.prop.mean_intensity for s in self._synapses]
+        if self._img_cell is not None:
+            x_mean_intensity = [s.prop.mean_intensity[0] for s in self._synapses]
+            x_sum_intensity = [np.sum(s.prop.intensity_image[s.prop.image][:, 0]) for s in self._synapses]
+            x_intensity_all = np.concatenate([s.prop.intensity_image[s.prop.image][:, 0] for s in self._synapses])
+        else:
+            x_mean_intensity = [s.prop.mean_intensity for s in self._synapses]
+            x_sum_intensity = [np.sum(s.prop.intensity_image[s.prop.image]) for s in self._synapses]
+            x_intensity_all = np.concatenate([s.prop.intensity_image[s.prop.image] for s in self._synapses])
         f.append(np.mean(x_mean_intensity))
         # 21) Standard deviation of average puncta intensity / Mean of average puncta intensity
         f.append(safe_div(np.std(x_mean_intensity), np.mean(x_mean_intensity)))
         # 22) Mean of integrated puncta intensity (integrated intensity refers to the sum of all pixel intensity
         #     values for each puncta)
-        x_sum_intensity = [np.sum(s.prop.intensity_image[s.prop.image]) for s in self._synapses]
         f.append(np.mean(x_sum_intensity))
         # 23) Standard deviation of integrated puncta intensity / Mean of integrated puncta intensity
         f.append(safe_div(np.std(x_sum_intensity), np.mean(x_sum_intensity)))
@@ -504,7 +516,6 @@ class SynapseQT3D(object):
         f.append(np.percentile(x_sum_intensity, 10))
 
         # 56->36) Fraction of puncta pixels with intensity larger or equal than 500 and smaller than 1000
-        x_intensity_all = np.concatenate([s.prop.intensity_image[s.prop.image] for s in self._synapses])
         f.append(safe_div(len(list(filter(lambda i: 500 <= i < 1000, x_intensity_all))), len(x_intensity_all)))
         # 57->37) Fraction of puncta pixels with intensity larger or equal than 1000 and smaller than 1500
         f.append(safe_div(len(list(filter(lambda i: 1000 <= i < 1500, x_intensity_all))), len(x_intensity_all)))
