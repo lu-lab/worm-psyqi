@@ -427,7 +427,7 @@ def predict(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_synapse_cutoff,
     logger.info('Finish prediction using the trained model')
 
 def test_all_classifiers(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_synapse_cutoff, channel_text,
-                         b_masking, minimize_storage=True, log_q=None):
+                         b_masking, n_to_test, minimize_storage=True, log_q=None):
     """
 
     Args:
@@ -446,7 +446,7 @@ def test_all_classifiers(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_sy
 
     """
     logger = init_logger_with_log_queue(log_q)
-    logger.info('Start testing all default models to the first image')
+    logger.info('Start testing all default models to the first %d image(s)' % n_to_test)
 
     # directory checking
     if not os.path.isdir(os.path.join(base_dir, raw_dir)):
@@ -491,7 +491,7 @@ def test_all_classifiers(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_sy
         models.append(SynapseClassifier_RF)
         list_modelname.append('RAB-3')
 
-    n_test = len(models) * len(raw_images[:3])
+    n_test = len(models) * len(raw_images[:n_to_test])
     n_test_done = 0
     for i_model in range(len(models)):
         model = models[i_model]
@@ -515,8 +515,8 @@ def test_all_classifiers(base_dir, raw_dir, mask_dir, predict_dir, n_p, small_sy
             return
         
         
-        # test over the first 2 images
-        for file_raw in raw_images[:2]:
+        # test over the first n_to_test images
+        for file_raw in raw_images[:n_to_test]:
             n_test_done += 1
             file_name = os.path.basename(file_raw).split('.')[0]
             file_label = os.path.join(output_dir, '%s_%s_pred.tif' % (modelname, file_name))

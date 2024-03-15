@@ -342,6 +342,9 @@ class SynapseSegmentator(tk.Tk):
         cur_row += 1
 
         # add test all classifier button
+        self.test_image_number = WidgetLabelEntry(self.tab_predict, 'Test images', '1', cur_row)
+        self.input_widgets.append(self.test_image_number.entry)
+        cur_row += 1
         self.btn_test_all_classifier = ttk.Button(self.tab_predict, text='Test all built-in classifiers',
                                                     command=self._onbutton_test_all_classifier)
         self.btn_test_all_classifier.grid(row=cur_row, columnspan=2, sticky=tk.NSEW)
@@ -556,10 +559,12 @@ class SynapseSegmentator(tk.Tk):
             self.option_builtin_classifier.show_widget()
             self.tp_dir_classifier.hide_widget()
             # show btn_test_all_classifier
-            self.btn_test_all_classifier.grid(row=9, columnspan=2, sticky=tk.NSEW)
+            self.test_image_number.show_widget()
+            self.btn_test_all_classifier.grid(row=10, columnspan=2, sticky=tk.NSEW)
         else:  # custom
             self.option_builtin_classifier.hide_widget()
             # hide btn_test_all_classifier
+            self.test_image_number.hide_widget()
             self.btn_test_all_classifier.grid_forget()
             self.tp_dir_classifier.show_widget()
 
@@ -875,11 +880,12 @@ class SynapseSegmentator(tk.Tk):
                                                     int(self.small_synapse_cutoff.var.get()),
                                                     self._get_channel_order_text(),
                                                     self.tp_masking.var.get(),
+                                                    int(self.test_image_number.var.get()),
                                                     True,
                                                     self.fr_log.log_queue,))
 
         self.logger_tofile.info(
-            'version=%s | function=%s | rawdir=%s | maskdir=%s | preddir=%s | n_p=%d | small_cutoff=%d | channel=%s | masking=%s' % (
+            'version=%s | function=%s | rawdir=%s | maskdir=%s | preddir=%s | n_p=%d | small_cutoff=%d | channel=%s | masking=%s | n_images=%d' % (
                 self.version, 'test_all_classifiers',
                 self.dir_raw.subvars[0].get(),
                 self.dir_mask.var.get(),
@@ -888,6 +894,7 @@ class SynapseSegmentator(tk.Tk):
                 int(self.small_synapse_cutoff.var.get()),
                 self._get_channel_order_text(),
                 self.tp_masking.var.get(),
+                int(self.test_image_number.var.get()),
             ))
 
     def _onbutton_test_all_classifier(self):

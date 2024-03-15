@@ -157,8 +157,10 @@ In the prediction step, the pipeline takes 1) raw images from the raw directory,
         - Enter the directory name containing the serialized classifier created in the training step.
 3. Use the neurite mask
     - If checked, synaptic puncta outside of the neurite mask from the mask step will be removed.
-4. Test all built-in classifiers
-    - By activating this option, PsyQi will generate synapse segmentation results for the first two images in the raw directory using all available built-in classifiers. This feature allows users to manually assess the outcomes and determine whether to employ a default model or to proceed with training a custom one. The results will be place in the prediction directory. For clarity in subsequent operations, it's recommended that these results be removed before moving to subsequent steps.
+4. Test images
+    - This field indicates the number of images to test in the following "Test all built-in classifiers" process.
+5. Test all built-in classifiers
+    - By activating this option, PsyQi will generate synapse segmentation results for the first few images in the raw directory using all available built-in classifiers. The number of images to test on is given by the "Test images" input box above the botton. This feature allows users to manually assess the outcomes and determine whether to employ a default model or to proceed with training a custom one. The results will be place in the prediction directory. For clarity in subsequent operations, it's recommended that these results be removed before moving to subsequent steps.
 <p id="figure7">
 
 ![Figure 7](./resources/running_guide/running_guide_figure7.png)
